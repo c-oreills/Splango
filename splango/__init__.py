@@ -34,7 +34,6 @@ def replace_insensitive(string, target, replacement):
 
 
 class RequestExperimentManager:
-
     def __init__(self, request):
         #logger.debug("REM init")
         self.request = request
@@ -43,21 +42,9 @@ class RequestExperimentManager:
 
         if self.request.session.get(SPLANGO_STATE) is None:
             self.request.session[SPLANGO_STATE] = S_UNKNOWN
-            
-            if self.is_first_visit():
-                
-                logger.info("First visit!")
-
-                first_visit_goalname = getattr(settings,
-                                               "SPLANGO_FIRST_VISIT_GOAL", 
-                                               None)
-
-                if first_visit_goalname:
-                    self.log_goal(first_visit_goalname)
 
     def enqueue(self, action, params):
         self.queued_actions.append( (action, params) )
-
 
     def process_from_queue(self, action, params):
         logger.info("dequeued: %s (%s)" % (str(action), repr(params)))
@@ -78,26 +65,6 @@ class RequestExperimentManager:
 
         else:
             raise RuntimeError("Unknown queue action '%s'." % action)
-
-
-    def is_first_visit(self):
-        r = self.request
-
-        if r.user.is_authenticated():
-            return False
-
-        ref = r.META.get("HTTP_REFERER", "").lower()
-
-        if not ref: # if no referer, then musta just typed it in
-            return True
-
-        if ref.startswith("http://"):
-            ref = ref[7:]
-        elif ref.startswith("https://"):
-            ref = ref[8:]
-
-        return not(ref.startswith(r.get_host()))
-
 
     def render_js(self):
         logger.info("render_js")
