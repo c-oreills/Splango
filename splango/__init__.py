@@ -1,10 +1,12 @@
 from django.conf import settings
 
-import logging
+from logging import getLogger
 from django.utils.encoding import smart_unicode
 from django.core.urlresolvers import reverse, NoReverseMatch
 
 from splango.models import Subject, Experiment, Enrollment, GoalRecord
+
+logger = getLogger(__name__)
 
 SPLANGO_STATE = "SPLANGO_STATE"
 SPLANGO_SUBJECT = "SPLANGO_SUBJECT"
@@ -34,7 +36,7 @@ def replace_insensitive(string, target, replacement):
 class RequestExperimentManager:
 
     def __init__(self, request):
-        #logging.debug("REM init")
+        #logger.debug("REM init")
         self.request = request
         self.user_at_init = request.user
         self.queued_actions = []
@@ -44,7 +46,7 @@ class RequestExperimentManager:
             
             if self.is_first_visit():
                 
-                logging.info("SPLANGO! First visit!")
+                logger.info("First visit!")
 
                 first_visit_goalname = getattr(settings,
                                                "SPLANGO_FIRST_VISIT_GOAL", 
@@ -58,7 +60,7 @@ class RequestExperimentManager:
 
 
     def process_from_queue(self, action, params):
-        logging.info("SPLANGO! dequeued: %s (%s)" % (str(action), repr(params)))
+        logger.info("dequeued: %s (%s)" % (str(action), repr(params)))
 
         if action == "enroll":
             exp = Experiment.objects.get(name=params["exp_name"])
@@ -71,7 +73,7 @@ class RequestExperimentManager:
                                   params["request_info"],
                                   extra=params.get("extra"))
 
-            logging.info("SPLANGO! goal! %s" % str(g))
+            logger.info("goal! %s" % str(g))
 
 
         else:
@@ -98,7 +100,7 @@ class RequestExperimentManager:
 
 
     def render_js(self):
-        logging.info("SPLANGO! render_js")
+        logger.info("render_js")
 
         prejs = ""
         postjs = ""
@@ -116,7 +118,7 @@ class RequestExperimentManager:
         
 
     def confirm_human(self, reqdata=None):
-        logging.info("SPLANGO! Human confirmed!")
+        logger.info("Human confirmed!")
         self.request.session[SPLANGO_STATE] = S_HUMAN
 
         for (action, params) in self.request.session.get(SPLANGO_QUEUED_UPDATES, []):
@@ -126,12 +128,12 @@ class RequestExperimentManager:
     def finish(self, response):
         curstate = self.request.session.get(SPLANGO_STATE, S_UNKNOWN)
 
-        #logging.info("SPLANGO! finished... state=%s" % curstate)
+        #logger.info("finished... state=%s" % curstate)
 
         curuser = self.request.user
 
         if self.user_at_init != curuser:
-            logging.info("SPLANGO! user status changed over request: %s --> %s" % (str(self.user_at_init), str(curuser)))
+            logger.info("user status changed over request: %s --> %s" % (str(self.user_at_init), str(curuser)))
 
             if not(curuser.is_authenticated()):
                 # User logged out. It's a new session, nothing special.
@@ -144,7 +146,7 @@ class RequestExperimentManager:
                 # or simply set the subject.registered_as field.
 
                 self.request.session[SPLANGO_STATE] = S_HUMAN
-                # logging in counts as being proved a human
+                # logger in counts as being proved a human
 
                 old_subject = self.request.session.get(SPLANGO_SUBJECT)
 
@@ -192,7 +194,7 @@ class RequestExperimentManager:
         if not sub:
             sub = self.request.session[SPLANGO_SUBJECT] = Subject()
             sub.save()
-            logging.info("SPLANGO! created subject: %s" % str(sub))
+            logger.info("created subject: %s" % str(sub))
         
         return sub
 
@@ -201,7 +203,7 @@ class RequestExperimentManager:
         e = Experiment.declare(exp_name, variants)
 
         if self.request.session[SPLANGO_STATE] != S_HUMAN:
-            logging.info("SPLANGO! choosing new random variant for non-human")
+            logger.info("choosing new random variant for non-human")
             v = e.get_random_variant()
             self.enqueue("enroll", { "exp_name": e.name, "variant": v })
 
@@ -209,7 +211,7 @@ class RequestExperimentManager:
             sub = self.get_subject()
             sv = e.get_variant_for(sub)
             v = sv.variant
-            logging.info("SPLANGO! got variant %s for subject %s" % (str(v),str(sub)))
+            logger.info("got variant %s for subject %s" % (str(v),str(sub)))
 
         return v
 
