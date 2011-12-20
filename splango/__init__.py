@@ -31,8 +31,6 @@ def replace_insensitive(string, target, replacement):
         return string
 
 
-
-
 class RequestExperimentManager:
     def __init__(self, request):
         #logger.debug("REM init")
@@ -91,7 +89,6 @@ class RequestExperimentManager:
         for (action, params) in self.request.session.get(SPLANGO_QUEUED_UPDATES, []):
             self.process_from_queue(action, params)
                 
-
     def finish(self, response):
         curstate = self.request.session.get(SPLANGO_STATE, S_UNKNOWN)
 
@@ -151,8 +148,6 @@ class RequestExperimentManager:
 
         return response
         
-        
-
     def get_subject(self):
         assert self.request.session[SPLANGO_STATE] == S_HUMAN, "Hey, you can't call get_subject until you know the subject is a human!"
 
@@ -164,7 +159,6 @@ class RequestExperimentManager:
             logger.info("created subject: %s" % str(sub))
         
         return sub
-
 
     def declare_and_enroll(self, exp_name, variants):
         e = Experiment.declare(exp_name, variants)
@@ -182,7 +176,6 @@ class RequestExperimentManager:
 
         return v
 
-
     def log_goal(self, goal_name, extra=None):
 
         request_info = GoalRecord.extract_request_info(self.request)
@@ -190,4 +183,3 @@ class RequestExperimentManager:
         self.enqueue("log_goal", { "goal_name": goal_name,
                                    "request_info": request_info,
                                    "extra": extra })
-

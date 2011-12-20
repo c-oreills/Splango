@@ -48,7 +48,6 @@ class Subject(models.Model):
             else:
                 gr.delete()
 
-
         other_exps = dict(( (e.experiment_id,1) for e in othersubject.enrollment_set.all() ))
 
         for e in self.enrollment_set.all():
@@ -59,7 +58,6 @@ class Subject(models.Model):
                 e.delete()
 
         self.delete()
-
 
 
 class GoalRecord(models.Model):
@@ -109,11 +107,6 @@ class GoalRecord(models.Model):
         return u"%s by subject #%d" % (self.goal, self.subject_id)
 
 
-
-
-
-
-
 class Enrollment(models.Model):
     """Identifies which variant a subject is assigned to in a given
     experiment."""
@@ -127,9 +120,6 @@ class Enrollment(models.Model):
 
     def __unicode__(self):
         return u"experiment '%s' subject #%d -- variant %s" % (self.experiment.name, self.subject_id, self.variant)
-
-
-    
 
 
 class Experiment(models.Model):
@@ -172,8 +162,6 @@ class Experiment(models.Model):
                 "variant": variant
                 })
         return sv
-        
-
 
     @classmethod
     def declare(cls, name, variants):
@@ -213,8 +201,6 @@ class ExperimentReport(models.Model):
                      pct=None,
                      pct_cumulative=1,
                      pct_cumulative_round=100))
-                
-
 
         result.append({ "goal": None, 
                         "variant_names": variants,
@@ -228,7 +214,6 @@ class ExperimentReport(models.Model):
                 g = None
 
             variant_counts = []
-
 
             for vi, v in enumerate(variants):
 
@@ -260,8 +245,6 @@ class ExperimentReport(models.Model):
                                            )
                                       )
 
-
             result.append({ "goal": goal, "variant_counts": variant_counts })
-
 
         return result
