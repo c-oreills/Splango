@@ -108,15 +108,18 @@ class RequestExperimentManager:
         
         return sub
 
-    def declare_and_enroll(self, exp_name, variants):
-        e = Experiment.declare(exp_name, variants)
+    def declare(self, exp_name, variants, enroll=False):
+        exp = Experiment.declare(exp_name, variants)
 
         sub = self.get_subject()
-        sv = e.get_variant_for(sub)
-        v = sv.variant
-        logger.info("got variant %s for subject %s" % (str(v),str(sub)))
-
-        return v
+        sub_enrollment = exp.get_variant_for(sub, enroll)
+        if sub_enrollment is not None:
+            var = sub_enrollment.variant
+            logger.info("got variant %s for subject %s" % (var,sub))
+        else:
+            var = None
+            logger.info("No variant for subject %s" % (sub,))
+        return var
 
     def log_goal(self, goal_name, extra=None):
 

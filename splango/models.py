@@ -145,14 +145,24 @@ class Experiment(models.Model):
     def variants_commasep(self):
         return ",".join(self.get_variants())
 
-    def get_variant_for(self, subject):
-        sv, created = Enrollment.objects.get_or_create(
-            subject=subject,
-            experiment=self,
-            defaults={
-                "variant": self.get_random_variant()
-                })
-        return sv
+    def get_variant_for(self, subject, enroll=False):
+        if enroll:
+            sub_enrollment, created = Enrollment.objects.get_or_create(
+                subject=subject,
+                experiment=self,
+                defaults={
+                    "variant": self.get_random_variant()
+                    })
+            return sub_enrollment
+        else:
+            try:
+                sub_enrollment = Enrollment.objects.get(
+                    subject=subject,
+                    experiment=self)
+            except Enrollment.DoesNotExist:
+                return None
+            else:
+                return sub_enrollment
 
     def enroll_subject_as_variant(self, subject, variant):
         sv, created = Enrollment.objects.get_or_create(
