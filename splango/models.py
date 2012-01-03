@@ -63,8 +63,8 @@ class GoalRecord(models.Model):
 class Enrollment(models.Model):
     """Identifies which variant a user is assigned to in a given
     experiment."""
-    user = models.ForeignKey(User, editable=False)
-    experiment = models.ForeignKey('splango.Experiment', editable=False)
+    user = models.ForeignKey(User)
+    experiment = models.ForeignKey('splango.Experiment')
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     variant = models.CharField(max_length=_NAME_LENGTH)
     
