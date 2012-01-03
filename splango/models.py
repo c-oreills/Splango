@@ -127,6 +127,7 @@ class Experiment(models.Model):
     name = models.CharField(max_length=_NAME_LENGTH, primary_key=True)
     variants = models.TextField() # one per line... lame and simple
     created = models.DateTimeField(auto_now_add=True, db_index=True)
+    is_enrollable = models.BooleanField(default=False)
 
     subjects = models.ManyToManyField(Subject, through=Enrollment)
     
@@ -147,6 +148,8 @@ class Experiment(models.Model):
 
     def get_variant_for(self, subject, enroll=False):
         if enroll:
+            if not self.is_enrollable:
+                raise Exception('Experiment %s is not enrollable' % (self.name))
             sub_enrollment, created = Enrollment.objects.get_or_create(
                 subject=subject,
                 experiment=self,
@@ -165,6 +168,8 @@ class Experiment(models.Model):
                 return sub_enrollment
 
     def enroll_subject_as_variant(self, subject, variant):
+        if not self.is_enrollable:
+            raise Exception('Experiment %s is not enrollable' % (self.name))
         sv, created = Enrollment.objects.get_or_create(
             subject=subject,
             experiment=self,
