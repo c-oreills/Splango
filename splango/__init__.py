@@ -112,7 +112,7 @@ class RequestExperimentManager:
         try:
             exp = Experiment.objects.get(name=exp_name)
         except Experiment.DoesNotExist:
-            logger.info("No experiment called %s" % (exp_name,))
+            logger.warning("No experiment called %s" % (exp_name,))
             return None
 
         sub = self.get_subject()
