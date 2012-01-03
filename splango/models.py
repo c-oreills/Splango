@@ -125,7 +125,7 @@ class Enrollment(models.Model):
 class Experiment(models.Model):
     """A named experiment."""
     name = models.CharField(max_length=_NAME_LENGTH, primary_key=True)
-    variants = models.TextField() # one per line... lame and simple
+    variants = models.CharField(max_length=100) # comma separated
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     is_enrollable = models.BooleanField(default=False)
 
@@ -135,16 +135,13 @@ class Experiment(models.Model):
         return self.name
 
     def set_variants(self, variantlist):
-        self.variants = "\n".join(variantlist)
+        self.variants = ",".join(variantlist)
 
     def get_variants(self):
-        return [ x for x in self.variants.split("\n") if x ]
+        return [ x for x in self.variants.split(",") if x ]
 
     def get_random_variant(self):
         return random.choice(self.get_variants())
-
-    def variants_commasep(self):
-        return ",".join(self.get_variants())
 
     def get_variant_for(self, subject, enroll=False):
         if enroll:
@@ -182,7 +179,7 @@ class Experiment(models.Model):
     def declare(cls, name, variants):
         e,created = cls.objects.get_or_create(name=name, 
                                               defaults={
-                "variants":"\n".join(variants) })
+                "variants":",".join(variants) })
         return e
 
 

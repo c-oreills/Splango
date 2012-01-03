@@ -17,7 +17,7 @@ class EnrollmentAdmin(admin.ModelAdmin):
 admin.site.register(Enrollment, EnrollmentAdmin)
 
 class ExperimentAdmin(admin.ModelAdmin):
-    list_display = ("name","variants_commasep","created")
+    list_display = ("name","variants","created")
 admin.site.register(Experiment, ExperimentAdmin)
 
 class ExperimentReportAdmin(admin.ModelAdmin):
