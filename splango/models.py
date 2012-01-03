@@ -125,7 +125,7 @@ class Enrollment(models.Model):
 class Experiment(models.Model):
     """A named experiment."""
     name = models.CharField(max_length=_NAME_LENGTH, primary_key=True)
-    variants = models.CharField(max_length=100) # comma separated
+    variants = models.CharField(max_length=100, help_text="List variants separated by commas")
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     is_enrollable = models.BooleanField(default=False)
 
