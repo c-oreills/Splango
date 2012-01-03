@@ -1,8 +1,6 @@
-from django.conf import settings
-
 from logging import getLogger
 
-from splango.models import Experiment, Enrollment, GoalRecord
+from splango.models import Experiment, GoalRecord
 
 logger = getLogger(__name__)
 

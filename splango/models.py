@@ -3,8 +3,6 @@ from django.contrib.auth.models import User
 
 import logging
 
-#from django.db.models import Avg, Max, Min, Count
-
 import random
 
 _NAME_LENGTH=30
