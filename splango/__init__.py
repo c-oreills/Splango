@@ -108,10 +108,15 @@ class RequestExperimentManager:
         
         return sub
 
-    def declare(self, exp_name, variants, enroll=False):
-        exp = Experiment.declare(exp_name, variants)
+    def get_variant(self, exp_name, enroll=False):
+        try:
+            exp = Experiment.objects.get(name=exp_name)
+        except Experiment.DoesNotExist:
+            logger.info("No experiment called %s" % (exp_name,))
+            return None
 
         sub = self.get_subject()
+
         sub_enrollment = exp.get_variant_for(sub, enroll)
         if sub_enrollment is not None:
             var = sub_enrollment.variant
