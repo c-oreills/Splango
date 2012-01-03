@@ -60,12 +60,12 @@ def experiment_log(request, expname, variant, goal):
 
     enrollments = Enrollment.objects.filter(experiment=exp, 
                                             variant=variant, 
-                                            subject__goals=goal).select_related("subject")[:1000]
+                                            user__goals=goal).select_related("user")[:1000]
     # 1000 limit is just there to keep this page sane
 
     goalrecords = GoalRecord.objects.filter(
         goal=goal,
-        subject__in=[ e.subject for e in enrollments ]).select_related("goal","subject")
+        user__in=[ e.user for e in enrollments ]).select_related("goal","user")
 
     title = "Experiment Log: variant %s, goal %s" % (variant, goal)
 

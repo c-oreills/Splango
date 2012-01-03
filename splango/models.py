@@ -16,53 +16,9 @@ class Goal(models.Model):
     def __unicode__(self):
         return self.name
 
-
-class Subject(models.Model):
-    """An experimental subject, possibly also a registered user (at creation
-    or later on."""
-
-    created = models.DateTimeField(auto_now_add=True, db_index=True)
-    registered_as = models.ForeignKey(User, null=True, editable=False, unique=True)
-
-    goals = models.ManyToManyField(Goal, through='GoalRecord')
-
-    def __unicode__(self):
-        if self.registered_as:
-            prefix = "registered"
-        else:
-            prefix = "anonymous"
-
-        return u"%s subject #%d" % (prefix, self.id)
-
-    def merge_into(self, othersubject):
-        """Move the enrollments and goalrecords associated with this subject
-        into the given othersubject, preserving the othersubject's
-        enrollments in case of conflict."""
-
-        other_gs = dict(((g.name, 1) for g in othersubject.goals.all()))
-        
-        for gr in self.goalrecord_set.all().select_related("goal"):
-            if gr.goal.name not in other_gs:
-                gr.subject = othersubject
-                gr.save()
-            else:
-                gr.delete()
-
-        other_exps = dict(( (e.experiment_id,1) for e in othersubject.enrollment_set.all() ))
-
-        for e in self.enrollment_set.all():
-            if e.experiment_id not in other_exps:
-                e.subject = othersubject
-                e.save()
-            else:
-                e.delete()
-
-        self.delete()
-
-
 class GoalRecord(models.Model):
     goal = models.ForeignKey(Goal)
-    subject = models.ForeignKey(Subject)
+    user = models.ForeignKey(User)
 
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     req_HTTP_REFERER = models.CharField(max_length=255, null=True, blank=True)
@@ -72,8 +28,8 @@ class GoalRecord(models.Model):
     extra = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
-        unique_together= (('subject', 'goal'),)
-        # never record the same goal twice for a given subject
+        unique_together= (('user', 'goal'),)
+        # never record the same goal twice for a given user
 
     @staticmethod
     def extract_request_info(request):
@@ -83,11 +39,11 @@ class GoalRecord(models.Model):
             req_path=request.path[:255])
 
     @classmethod
-    def record(cls, subject, goalname, request_info, extra=None):
-        logging.warn("Splango:goalrecord %r" % [subject, goalname, request_info, extra])
+    def record(cls, user, goalname, request_info, extra=None):
+        logging.warn("Splango:goalrecord %r" % [user, goalname, request_info, extra])
         goal, created = Goal.objects.get_or_create(name=goalname)
 
-        gr,created = cls.objects.get_or_create(subject=subject, 
+        gr,created = cls.objects.get_or_create(user=user, 
                                                goal=goal,
                                                defaults=request_info)
 
@@ -100,26 +56,25 @@ class GoalRecord(models.Model):
 
     @classmethod
     def record_user_goal(cls, user, goalname):
-        sub, created = Subject.objects.get_or_create(registered_as=user)
-        cls.record(sub, goalname, {})
+        cls.record(user, goalname, {})
 
     def __unicode__(self):
-        return u"%s by subject #%d" % (self.goal, self.subject_id)
+        return u"%s by user #%d" % (self.goal, self.user_id)
 
 
 class Enrollment(models.Model):
-    """Identifies which variant a subject is assigned to in a given
+    """Identifies which variant a user is assigned to in a given
     experiment."""
-    subject = models.ForeignKey('splango.Subject', editable=False)
+    user = models.ForeignKey(User, editable=False)
     experiment = models.ForeignKey('splango.Experiment', editable=False)
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     variant = models.CharField(max_length=_NAME_LENGTH)
     
     class Meta:
-        unique_together= (('subject', 'experiment'),)
+        unique_together= (('user', 'experiment'),)
 
     def __unicode__(self):
-        return u"experiment '%s' subject #%d -- variant %s" % (self.experiment.name, self.subject_id, self.variant)
+        return u"experiment '%s' user #%d -- variant %s" % (self.experiment.name, self.user_id, self.variant)
 
 
 class Experiment(models.Model):
@@ -129,7 +84,7 @@ class Experiment(models.Model):
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     is_enrollable = models.BooleanField(default=False)
 
-    subjects = models.ManyToManyField(Subject, through=Enrollment)
+    users = models.ManyToManyField(User, through=Enrollment)
     
     def __unicode__(self):
         return self.name
@@ -143,37 +98,37 @@ class Experiment(models.Model):
     def get_random_variant(self):
         return random.choice(self.get_variants())
 
-    def get_variant_for(self, subject, enroll=False):
+    def get_variant_for(self, user, enroll=False):
         if enroll:
             if not self.is_enrollable:
                 raise Exception('Experiment %s is not enrollable' % (self.name))
-            sub_enrollment, created = Enrollment.objects.get_or_create(
-                subject=subject,
+            user_enrollment, created = Enrollment.objects.get_or_create(
+                user=user,
                 experiment=self,
                 defaults={
                     "variant": self.get_random_variant()
                     })
-            return sub_enrollment
+            return user_enrollment
         else:
             try:
-                sub_enrollment = Enrollment.objects.get(
-                    subject=subject,
+                user_enrollment = Enrollment.objects.get(
+                    user=user,
                     experiment=self)
             except Enrollment.DoesNotExist:
                 return None
             else:
-                return sub_enrollment
+                return user_enrollment
 
-    def enroll_subject_as_variant(self, subject, variant):
+    def enroll_user_as_variant(self, user, variant):
         if not self.is_enrollable:
             raise Exception('Experiment %s is not enrollable' % (self.name))
-        sv, created = Enrollment.objects.get_or_create(
-            subject=subject,
+        enrollment, _ = Enrollment.objects.get_or_create(
+            user=user,
             experiment=self,
             defaults={
                 "variant": variant
                 })
-        return sv
+        return enrollment
 
     @classmethod
     def declare(cls, name, variants):
@@ -206,7 +161,6 @@ class ExperimentReport(models.Model):
         variant_counts = []
 
         for v in variants:
-            #variant_counts.append(exp.subjectvariant_set.filter(variant=v).aggregate(ct=Count("variant")).get("ct",0))
             variant_counts.append(
                 dict(val=Enrollment.objects.filter(experiment=exp, variant=v).count(),
                      variant_name=v,
@@ -232,7 +186,7 @@ class ExperimentReport(models.Model):
                 if g:
                     vcount = Enrollment.objects.filter(experiment=exp, 
                                                        variant=v, 
-                                                       subject__goals=g
+                                                       user__goals=g
                                                        ).count()
 
                     prev_count = result[previ]["variant_counts"][vi]["val"]

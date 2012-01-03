@@ -1,19 +1,17 @@
 from django.contrib import admin
 
-from splango.models import Subject, Goal, GoalRecord, Enrollment, Experiment, ExperimentReport
-
-admin.site.register(Subject)
+from splango.models import Goal, GoalRecord, Enrollment, Experiment, ExperimentReport
 
 class GoalAdmin(admin.ModelAdmin):
     list_display = ("name","created")
 admin.site.register(Goal, GoalAdmin)
 
 class GoalRecordAdmin(admin.ModelAdmin):
-    list_display = ("goal","subject","created","req_HTTP_REFERER")
+    list_display = ("goal","user","created","req_HTTP_REFERER")
 admin.site.register(GoalRecord, GoalRecordAdmin)
 
 class EnrollmentAdmin(admin.ModelAdmin):
-    list_display = ("subject","experiment","variant","created")
+    list_display = ("user","experiment","variant","created")
 admin.site.register(Enrollment, EnrollmentAdmin)
 
 class ExperimentAdmin(admin.ModelAdmin):

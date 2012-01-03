@@ -7,7 +7,7 @@ import logging
 register = template.Library()
 
 
-from splango.models import Goal, Subject, GoalRecord, Enrollment, Experiment, ExperimentReport
+from splango.models import Goal, GoalRecord, Enrollment, Experiment, ExperimentReport
 
 CTX_PREFIX = "__splango__experiment__"
 

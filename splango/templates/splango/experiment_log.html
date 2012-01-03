@@ -18,7 +18,7 @@
 <table>
   <tr>
     <th>Time</th> 
-    <th>Subject</th> 
+    <th>User</th> 
     <th>Type</th>
     <th colspan="3">Data</th>
   </tr>
@@ -28,14 +28,14 @@
     {% if act.variant %}
     {# activity is an enrollment #}
     <td>{{act.created}}</td>
-    <td>{{act.subject}}</td>
+    <td>{{act.user}}</td>
     <td>Enrollment</td>
     <td colspan="3">&nbsp;</td>
 
     {% else %}
     {# activity is a goal record #}
     <td>{{act.created}}</td>
-    <td>{{act.subject}}</td>
+    <td>{{act.user}}</td>
     <td>{{act.goal}}</td>
     <td>{{act.req_REMOTE_ADDR}}</td>
     <td>{{act.req_path}}</td>
